@@ -197,14 +197,14 @@ function checkKeyboard() {
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
 
   if (keyboard.pressed("W"))
-    orbPosition.value.z -= orbSpeed;
+    orbPosition.value.addScaledVector(forward, orbSpeed);
   else if (keyboard.pressed("S"))
-    orbPosition.value.z += orbSpeed;
+    orbPosition.value.addScaledVector(forward, -orbSpeed);
 
   if (keyboard.pressed("A"))
-    orbPosition.value.x -= orbSpeed;
+    orbPosition.value.addScaledVector(right, -orbSpeed);
   else if (keyboard.pressed("D"))
-    orbPosition.value.x += orbSpeed;
+    orbPosition.value.addScaledVector(right, orbSpeed);
 
   if (keyboard.pressed("E"))
     orbPosition.value.y -= orbSpeed;

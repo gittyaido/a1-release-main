@@ -28,6 +28,8 @@ const grabPosition = { type: 'v3', value: new THREE.Vector3() };
 let spring = 0;
 let springVelocity = 0;
 
+let springAmount = { type: 'f', value: 0.0 };
+
 // Materials: specifying uniforms and shaders
 // Diffuse texture map (this defines the main colors of the boxing glove)
 const gloveColorMap = new THREE.TextureLoader().load('images/boxing_gloves_texture.png');
@@ -74,7 +76,8 @@ const armadilloMaterial = new THREE.ShaderMaterial({
     orbPosition: orbPosition,
     orbRadius: orbRadius,
     isPulling: isPulling,
-    grabPosition: grabPosition
+    grabPosition: grabPosition,
+    springAmount: springAmount
   }
 });
 const sphereMaterial = new THREE.ShaderMaterial({
@@ -165,13 +168,32 @@ function checkKeyboard() {
   else if (keyboard.pressed("Q"))
     orbPosition.value.y += 0.3;
 
+  // if (spaceDown) {
+  //   grabPosition.value.copy(orbPosition.value);
+  //   isPulling.value = true;
+  // }
+  // if (spaceUp) {
+  //   isPulling.value = false;
+  // }
+
   if (spaceDown) {
-    grabPosition.value.copy(orbPosition.value);
-    isPulling.value = true;
+      grabPosition.value.copy(orbPosition.value);
   }
-  if (spaceUp) {
-    isPulling.value = false;
+  if (spacePressed) {
+    // springAmount.value = 1.0;
+    spring = 1.0;
+    springVelocity = 0.0;
   }
+  else {
+    const stiffness = 0.08;
+    const damping = 0.90;
+    // spring wants to return to zero
+    springVelocity += (0.0 - spring) * stiffness;
+    springVelocity *= damping;
+    spring += springVelocity;
+  } 
+  springAmount.value = spring;
+
   // The following tells three.js that some uniforms might have changed
   armadilloMaterial.needsUpdate = true;
   sphereMaterial.needsUpdate = true;

@@ -3,6 +3,7 @@ uniform vec3 orbPosition;
 uniform float orbRadius;
 uniform bool isPulling;
 uniform vec3 grabPosition;
+uniform float springAmount;
 
 
 // This is a "varying" variable and interpolated between vertices and across fragments.
@@ -18,26 +19,16 @@ void main() {
 
     float dist = distance(pos, orbPosition);
 
+    float distFromGrab = distance(pos, grabPosition);
 
-    // if (dist < orbRadius && isPulling) {
-    //   float t = 1.0 - (dist / orbRadius);
+    if (distFromGrab < orbRadius) {
 
-    //   float strength = t * t;
-    //   pos += dir * strength * 3.0;
+      float weight = 1.0 - distFromGrab / orbRadius;
+      weight = smoothstep(0.0, 1.0, weight);
 
-    // }
+      vec3 displacement = orbPosition - grabPosition;
 
-     if (isPulling) {
-        float distFromGrab = distance(pos, grabPosition);
-
-        if (distFromGrab < orbRadius) {
-            float weight = 1.0 - distFromGrab / orbRadius;
-            weight = smoothstep(0.0, 1.0, weight);
-
-            vec3 displacement = orbPosition - grabPosition;
-
-            pos += displacement * weight;
-        }
+      pos += displacement * weight * springAmount;
     }
     
     // TODO: Make changes here for part b, c, d

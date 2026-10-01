@@ -31,6 +31,8 @@ let springVelocity = 0;
 let springAmount = { type: 'f', value: 0.0 };
 const maxStretch = {type: 'f', value: 10.0};
 
+const shockwaveTime = { type: 'f', value: -1.0 };
+const shockwaveStrength = { type: 'f', value: 0.0 };
 
 // Materials: specifying uniforms and shaders
 // Diffuse texture map (this defines the main colors of the boxing glove)
@@ -80,7 +82,9 @@ const armadilloMaterial = new THREE.ShaderMaterial({
     isPulling: isPulling,
     grabPosition: grabPosition,
     springAmount: springAmount,
-    maxStretch: maxStretch
+    maxStretch: maxStretch,
+    shockwaveTime: shockwaveTime,
+    shockwaveStrength: shockwaveStrength,
   }
 });
 const sphereMaterial = new THREE.ShaderMaterial({
@@ -155,7 +159,7 @@ function checkKeyboard() {
   const spaceDown = spacePressed && !wasSpacePressed;
   const spaceUp = !spacePressed && wasSpacePressed;
 
-  const stiffness = 0.15;
+  const stiffness = 0.05;
   const damping = 0.90;
   const maxOrbSpeed = 0.3;
   let dist = grabPosition.value.distanceTo(orbPosition.value);
@@ -181,9 +185,11 @@ function checkKeyboard() {
     spring += springVelocity;
   } 
 
-  // hacky recoil
+  // hacky recoil + shockwave
   if (spaceUp) {
     orbSpeed = maxOrbSpeed * 5.0;
+    shockwaveTime.value = 0.0;
+    shockwaveStrength.value = 2.0 * (dist / maxStretch.value);
   }
   springAmount.value = spring;
   
@@ -225,6 +231,16 @@ function checkKeyboard() {
 // Setup update callback
 function update() {
   checkKeyboard();
+
+  if (shockwaveTime.value >= 0.0) {
+    shockwaveTime.value += 0.05;
+    shockwaveStrength.value *= 0.96;
+
+    if (shockwaveStrength.value < 0.01) {
+      shockwaveTime.value = -1.0;
+      shockwaveStrength.value = 0.0;
+    }
+  }
 
   // Requests the next update call, this creates a loop
   requestAnimationFrame(update);

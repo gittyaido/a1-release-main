@@ -6,6 +6,9 @@ uniform vec3 grabPosition;
 uniform float springAmount;
 uniform float maxStretch;
 
+uniform float shockwaveTime;
+uniform float shockwaveStrength;
+
 
 // This is a "varying" variable and interpolated between vertices and across fragments.
 // The shared variable is initialized in the vertex shader and passed to the fragment shader.
@@ -20,9 +23,9 @@ void main() {
     intensity = max(dot(worldNormal, dir), 0.0); 
 
     float dist = distance(pos, orbPosition);
-
     float distFromGrab = distance(pos, grabPosition);
 
+    // grab and pull
     if (distFromGrab < orbRadius) {
 
       float weight = 1.0 - distFromGrab / orbRadius;
@@ -33,6 +36,16 @@ void main() {
       pos += displacement * weight * springAmount;
 
       stretch = springAmount * weight * length(displacement);
+    }
+
+    // shockwave
+    if (shockwaveTime >= 0.0) {
+      float waveRadius = shockwaveTime * 10.0;
+      float waveWidth = 1.0;
+
+      float wave = 1.0 - clamp(abs(distFromGrab - waveRadius) / waveWidth, 0.0, 1.0);
+
+      pos += worldNormal * wave * shockwaveStrength;
     }
     
     // TODO: Make changes here for part b, c, d

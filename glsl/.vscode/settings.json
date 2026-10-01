@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.glsl": "glsl"
+    },
+    "glsllint.validatorArgs": ["--glsl-version", "300"]
+}

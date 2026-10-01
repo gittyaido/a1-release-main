@@ -4,12 +4,14 @@ uniform float orbRadius;
 uniform bool isPulling;
 uniform vec3 grabPosition;
 uniform float springAmount;
+uniform float maxStretch;
 
 
 // This is a "varying" variable and interpolated between vertices and across fragments.
 // The shared variable is initialized in the vertex shader and passed to the fragment shader.
 out float intensity;
 out vec3 pos;
+out float stretch;
 
 void main() {
     pos = (modelMatrix * vec4(position, 1.0)).xyz;
@@ -29,6 +31,8 @@ void main() {
       vec3 displacement = orbPosition - grabPosition;
 
       pos += displacement * weight * springAmount;
+
+      stretch = springAmount * weight * length(displacement);
     }
     
     // TODO: Make changes here for part b, c, d

@@ -20,7 +20,7 @@ const {
 const orbPosition = { type: 'v3', value: new THREE.Vector3(0.0, 1.0, 0.0) };
 // TODO: Create uniform variable for the radius of the orb and pass it into the shaders,
 // you will need them in the latter part of the assignment
-const orbRadius = { type: 'f', value: 3.0 }
+const orbRadius = { type: 'f', value: 2.0 }
 
 let isPulling = { type: 'b', value: false }
 const grabPosition = { type: 'v3', value: new THREE.Vector3() };
@@ -29,6 +29,8 @@ let spring = 0;
 let springVelocity = 0;
 
 let springAmount = { type: 'f', value: 0.0 };
+const maxStretch = {type: 'f', value: 10.0};
+
 
 // Materials: specifying uniforms and shaders
 // Diffuse texture map (this defines the main colors of the boxing glove)
@@ -77,7 +79,8 @@ const armadilloMaterial = new THREE.ShaderMaterial({
     orbRadius: orbRadius,
     isPulling: isPulling,
     grabPosition: grabPosition,
-    springAmount: springAmount
+    springAmount: springAmount,
+    maxStretch: maxStretch
   }
 });
 const sphereMaterial = new THREE.ShaderMaterial({
@@ -148,51 +151,66 @@ scene.add(sphereLight);
 const keyboard = new THREEx.KeyboardState();
 let wasSpacePressed = false;
 function checkKeyboard() {
-
   const spacePressed = keyboard.pressed("space");
   const spaceDown = spacePressed && !wasSpacePressed;
   const spaceUp = !spacePressed && wasSpacePressed;
 
-  if (keyboard.pressed("W"))
-    orbPosition.value.z -= 0.3;
-  else if (keyboard.pressed("S"))
-    orbPosition.value.z += 0.3;
-
-  if (keyboard.pressed("A"))
-    orbPosition.value.x -= 0.3;
-  else if (keyboard.pressed("D"))
-    orbPosition.value.x += 0.3;
-
-  if (keyboard.pressed("E"))
-    orbPosition.value.y -= 0.3;
-  else if (keyboard.pressed("Q"))
-    orbPosition.value.y += 0.3;
-
-  // if (spaceDown) {
-  //   grabPosition.value.copy(orbPosition.value);
-  //   isPulling.value = true;
-  // }
-  // if (spaceUp) {
-  //   isPulling.value = false;
-  // }
+  const stiffness = 0.15;
+  const damping = 0.90;
+  const maxOrbSpeed = 0.3;
+  let dist = grabPosition.value.distanceTo(orbPosition.value);
+  let strength =  1.0 - Math.min(Math.max(dist / maxStretch.value, 0.0), 1.0); 
+  let stretch = maxStretch.value * (1.0 - Math.exp(-strength * stiffness));
+  let orbSpeed = maxOrbSpeed;
 
   if (spaceDown) {
-      grabPosition.value.copy(orbPosition.value);
+    grabPosition.value.copy(orbPosition.value);
   }
   if (spacePressed) {
-    // springAmount.value = 1.0;
     spring = 1.0;
     springVelocity = 0.0;
+
+    stretch = grabPosition.value.distanceTo(orbPosition.value);
+
+    orbSpeed = maxOrbSpeed * (1.0 - Math.min(Math.max(stretch / maxStretch.value, 0.0), 1.0));
   }
+  // spring back
   else {
-    const stiffness = 0.08;
-    const damping = 0.90;
-    // spring wants to return to zero
     springVelocity += (0.0 - spring) * stiffness;
     springVelocity *= damping;
     spring += springVelocity;
   } 
+
+  // hacky recoil
+  if (spaceUp) {
+    orbSpeed = maxOrbSpeed * 5.0;
+  }
   springAmount.value = spring;
+  
+
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+
+  forward.y = 0;
+  forward.normalize();
+
+  const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+
+  if (keyboard.pressed("W"))
+    orbPosition.value.z -= orbSpeed;
+  else if (keyboard.pressed("S"))
+    orbPosition.value.z += orbSpeed;
+
+  if (keyboard.pressed("A"))
+    orbPosition.value.x -= orbSpeed;
+  else if (keyboard.pressed("D"))
+    orbPosition.value.x += orbSpeed;
+
+  if (keyboard.pressed("E"))
+    orbPosition.value.y -= orbSpeed;
+  else if (keyboard.pressed("Q"))
+    orbPosition.value.y += orbSpeed;
+
 
   // The following tells three.js that some uniforms might have changed
   armadilloMaterial.needsUpdate = true;
